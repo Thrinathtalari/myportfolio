@@ -10,13 +10,14 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Connect & Deploy
-        uses: appleboy/ssh-action@v0.1.10
+      - name: Deploy via SSH
+        uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.HOST }}
-          username: ${{ secrets.USER }}
-          key: ${{ secrets.SSH_KEY }}
+          host: YOUR_EC2_PUBLIC_IP
+          username: ubuntu
+          key: ${{ secrets.EC2_SSH_KEY }}
           script: |
-            cd /home/ubuntu/myportfolio
+            cd ~/myportfolio
             git pull origin main
-            pm2 restart all
+            npm install
+            pm2 restart app
