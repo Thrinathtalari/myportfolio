@@ -8,9 +8,12 @@ app.get('/', (req, res) => {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Thrinath | Premium Portfolio</title>
+<title>Thrinath | Ultra Portfolio</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
 
 <style>
 * {
@@ -21,9 +24,9 @@ app.get('/', (req, res) => {
 }
 
 body {
-  overflow-x: hidden;
   background: black;
   color: white;
+  overflow-x: hidden;
 }
 
 /* 3D canvas */
@@ -34,11 +37,11 @@ canvas {
   z-index: -1;
 }
 
-/* Glass navbar */
+/* Navbar */
 header {
   position: fixed;
   width: 100%;
-  padding: 20px 50px;
+  padding: 20px 60px;
   display: flex;
   justify-content: space-between;
   backdrop-filter: blur(15px);
@@ -47,12 +50,16 @@ header {
 
 nav a {
   margin-left: 20px;
-  text-decoration: none;
   color: white;
-  transition: 0.3s;
+  text-decoration: none;
 }
 nav a:hover {
   color: #00f7ff;
+}
+
+/* Sections */
+section {
+  padding: 120px 60px;
 }
 
 /* Hero */
@@ -61,12 +68,10 @@ nav a:hover {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  align-items: center;
-  animation: fadeIn 2s ease;
 }
 
 .hero h1 {
-  font-size: 60px;
+  font-size: 70px;
 }
 
 .hero span {
@@ -74,51 +79,32 @@ nav a:hover {
 }
 
 .hero p {
-  margin-top: 10px;
-  font-size: 20px;
+  margin-top: 15px;
   opacity: 0.7;
 }
 
-.btn {
-  margin-top: 20px;
-  padding: 12px 30px;
-  border-radius: 30px;
-  background: #00f7ff;
-  color: black;
-  text-decoration: none;
-  transition: 0.3s;
-}
-.btn:hover {
-  transform: scale(1.1);
-}
-
 /* Cards */
-.section {
-  padding: 100px 50px;
-}
-
 .cards {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(250px,1fr));
   gap: 20px;
 }
 
 .card {
-  padding: 20px;
+  padding: 25px;
   border-radius: 20px;
   background: rgba(255,255,255,0.05);
   backdrop-filter: blur(10px);
   transition: 0.4s;
 }
 .card:hover {
-  transform: translateY(-15px) scale(1.05);
-  background: rgba(255,255,255,0.1);
+  transform: translateY(-10px) scale(1.05);
 }
 
-/* Animation */
-@keyframes fadeIn {
-  from {opacity: 0;}
-  to {opacity: 1;}
+/* Footer */
+footer {
+  text-align: center;
+  padding: 40px;
 }
 </style>
 </head>
@@ -129,89 +115,87 @@ nav a:hover {
   <h2>Thrinath</h2>
   <nav>
     <a href="#">Home</a>
+    <a href="#skills">Skills</a>
     <a href="#projects">Projects</a>
   </nav>
 </header>
 
-<div class="hero">
-  <h1>Hi, I'm <span>Thrinath</span></h1>
-  <p>AWS • DevOps • Cloud Engineer</p>
-  <a href="#projects" class="btn">Explore</a>
-</div>
+<section class="hero">
+  <h1>Hello, I'm <span>Thrinath</span></h1>
+  <p>AWS | DevOps | Cloud Engineer</p>
+</section>
 
-<div class="section" id="projects">
+<section id="skills">
+  <h2>⚡ Skills</h2>
+  <div class="cards">
+    <div class="card">AWS EC2, S3, IAM</div>
+    <div class="card">CI/CD Pipelines</div>
+    <div class="card">Docker & Linux</div>
+  </div>
+</section>
+
+<section id="projects">
   <h2>🚀 Projects</h2>
   <div class="cards">
-    <div class="card">
-      <h3>CI/CD Pipeline</h3>
-      <p>GitHub Actions → AWS EC2 auto deploy</p>
-    </div>
-    <div class="card">
-      <h3>Cloud Infra</h3>
-      <p>EC2 + Nginx + PM2 production setup</p>
-    </div>
-    <div class="card">
-      <h3>Portfolio</h3>
-      <p>High-end animated web app</p>
-    </div>
+    <div class="card">Auto Deploy (GitHub → EC2)</div>
+    <div class="card">Nginx + PM2 Setup</div>
+    <div class="card">Portfolio System</div>
   </div>
-</div>
+</section>
 
-<!-- THREE JS -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
+<footer>
+  <p>© 2026 Thrinath | Built with DevOps ❤️</p>
+</footer>
 
 <script>
-// Scene
+// THREE.JS BACKGROUND
 const scene = new THREE.Scene();
 const camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 0.1, 1000);
-
 const renderer = new THREE.WebGLRenderer();
 renderer.setSize(window.innerWidth, window.innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// Particles
 const geometry = new THREE.BufferGeometry();
 const vertices = [];
 
-for (let i = 0; i < 10000; i++) {
+for (let i = 0; i < 8000; i++) {
   vertices.push(
-    Math.random() * 2000 - 1000,
-    Math.random() * 2000 - 1000,
-    Math.random() * 2000 - 1000
+    Math.random()*2000-1000,
+    Math.random()*2000-1000,
+    Math.random()*2000-1000
   );
 }
 
-geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices, 3));
-
-const material = new THREE.PointsMaterial({ color: 0x00f7ff });
+geometry.setAttribute('position', new THREE.Float32BufferAttribute(vertices,3));
+const material = new THREE.PointsMaterial({color:0x00f7ff});
 const particles = new THREE.Points(geometry, material);
 scene.add(particles);
 
 camera.position.z = 500;
 
-// Animation
 function animate() {
   requestAnimationFrame(animate);
-
-  particles.rotation.x += 0.0005;
   particles.rotation.y += 0.001;
-
   renderer.render(scene, camera);
 }
-
 animate();
 
-// Resize fix
-window.addEventListener('resize', () => {
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  camera.aspect = window.innerWidth / window.innerHeight;
-  camera.updateProjectionMatrix();
+// GSAP ANIMATIONS
+gsap.from(".hero h1", {y:100, opacity:0, duration:1});
+gsap.from(".hero p", {y:50, opacity:0, delay:0.5});
+
+gsap.from(".card", {
+  scrollTrigger: ".card",
+  opacity:0,
+  y:50,
+  stagger:0.2
 });
+
 </script>
 
 </body>
 </html>
-  `);
+`);
 });
 
 app.listen(3000, () => {
