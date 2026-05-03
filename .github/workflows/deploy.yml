@@ -13,9 +13,9 @@ jobs:
       - name: Deploy via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: YOUR_EC2_PUBLIC_IP
-          username: ubuntu
-          key: ${{ secrets.EC2_SSH_KEY }}
+          host: ${{ secrets.HOST }}
+          username: ${{ secrets.USER }}
+          key: ${{ secrets.SSH_KEY }}
           script: |
             cd ~/myportfolio
             git pull origin main
