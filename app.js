@@ -1,59 +1,73 @@
 const express = require('express');
-const fs = require('fs');
-const path = require('path');
+const mongoose = require('mongoose');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
 const app = express();
-
-// Middleware
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
 
-// ===== DATA STORAGE =====
-const DATA_FILE = 'contacts.json';
+const SECRET = "mysecretkey"; // later we move to env
 
-// Create file if not exists
-if (!fs.existsSync(DATA_FILE)) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify([]));
-}
+// ===== DATABASE =====
+mongoose.connect('mongodb://127.0.0.1:27017/portfolio');
 
-// ===== API ROUTES =====
-
-// GET projects
-app.get('/api/projects', (req, res) => {
-  res.json([
-    { name: "CI/CD Pipeline", desc: "GitHub → EC2 automation" },
-    { name: "Portfolio", desc: "3D animated website" },
-    { name: "Cloud Setup", desc: "AWS EC2 + Nginx + PM2" }
-  ]);
+// ===== SCHEMAS =====
+const User = mongoose.model('User', {
+  email: String,
+  password: String
 });
 
-// GET skills
-app.get('/api/skills', (req, res) => {
-  res.json([
-    "AWS", "Docker", "CI/CD", "Linux", "Node.js"
-  ]);
+const Contact = mongoose.model('Contact', {
+  name: String,
+  email: String,
+  message: String,
+  createdAt: { type: Date, default: Date.now }
 });
 
-// POST contact
-app.post('/api/contact', (req, res) => {
-  const { name, email, message } = req.body;
+// ===== AUTH =====
 
-  const data = JSON.parse(fs.readFileSync(DATA_FILE));
-  data.push({ name, email, message, time: new Date() });
+// REGISTER
+app.post('/api/register', async (req, res) => {
+  const hashed = await bcrypt.hash(req.body.password, 10);
 
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+  const user = new User({
+    email: req.body.email,
+    password: hashed
+  });
 
+  await user.save();
+  res.json({ success: true });
+});
+
+// LOGIN
+app.post('/api/login', async (req, res) => {
+  const user = await User.findOne({ email: req.body.email });
+
+  if (!user) return res.status(400).send("User not found");
+
+  const match = await bcrypt.compare(req.body.password, user.password);
+
+  if (!match) return res.status(400).send("Wrong password");
+
+  const token = jwt.sign({ id: user._id }, SECRET);
+
+  res.json({ token });
+});
+
+// ===== CONTACT =====
+app.post('/api/contact', async (req, res) => {
+  const msg = new Contact(req.body);
+  await msg.save();
   res.json({ success: true });
 });
 
 // ===== FRONTEND =====
-
 app.get('/', (req, res) => {
   res.send(`
 <!DOCTYPE html>
 <html>
 <head>
-<title>Thrinath Portfolio</title>
+<title>Ultra Portfolio</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r134/three.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
@@ -61,67 +75,56 @@ app.get('/', (req, res) => {
 <style>
 body { background:black; color:white; font-family:sans-serif; }
 section { padding:100px; }
-input, textarea { width:100%; margin:10px 0; padding:10px; }
-button { padding:10px 20px; }
+input, button { padding:10px; margin:5px; }
 </style>
 </head>
 
 <body>
 
-<h1>🚀 Thrinath Portfolio</h1>
+<h1>🚀 Thrinath Ultra Portfolio</h1>
 
 <section>
-<h2>Projects</h2>
-<div id="projects"></div>
-</section>
-
-<section>
-<h2>Skills</h2>
-<div id="skills"></div>
+<h2>Login</h2>
+<input id="email" placeholder="email">
+<input id="pass" type="password" placeholder="password">
+<button onclick="login()">Login</button>
 </section>
 
 <section>
 <h2>Contact</h2>
-<form id="form">
-<input name="name" placeholder="Name" required />
-<input name="email" placeholder="Email" required />
-<textarea name="message" placeholder="Message"></textarea>
-<button>Send</button>
-</form>
+<input id="name" placeholder="name">
+<input id="msg" placeholder="message">
+<button onclick="send()">Send</button>
 </section>
 
 <script>
-// Load projects
-fetch('/api/projects')
-.then(res => res.json())
-.then(data => {
-  document.getElementById('projects').innerHTML =
-    data.map(p => '<p>'+p.name+' - '+p.desc+'</p>').join('');
-});
-
-// Load skills
-fetch('/api/skills')
-.then(res => res.json())
-.then(data => {
-  document.getElementById('skills').innerHTML =
-    data.map(s => '<span>'+s+'</span><br>').join('');
-});
-
-// Contact form
-document.getElementById('form').addEventListener('submit', async (e) => {
-  e.preventDefault();
-
-  const formData = new FormData(e.target);
-  const data = Object.fromEntries(formData);
-
-  await fetch('/api/contact', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(data)
+async function login() {
+  const res = await fetch('/api/login', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      email: document.getElementById('email').value,
+      password: document.getElementById('pass').value
+    })
   });
 
-  alert('Message sent!');
-});
+  const data = await res.json();
+  localStorage.setItem('token', data.token);
+  alert("Logged in");
+}
+
+async function send() {
+  await fetch('/api/contact', {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({
+      name: document.getElementById('name').value,
+      message: document.getElementById('msg').value
+    })
+  });
+
+  alert("Message saved");
+}
 </script>
 
 </body>
@@ -129,7 +132,5 @@ document.getElementById('form').addEventListener('submit', async (e) => {
 `);
 });
 
-// START SERVER
-app.listen(3000, () => {
-  console.log("Server running on port 3000");
-});
+// ===== START =====
+app.listen(3000, () => console.log("Server running"));
