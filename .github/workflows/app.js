@@ -1,1 +1,0 @@
-res.send('AUTO DEPLOY FROM GITHUB 🚀');
